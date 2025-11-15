@@ -1,0 +1,30 @@
+{
+  "displayName": "LSM9DS1",
+  "vendor": "STMicroelectronics",
+  "productURL": "https://www.adafruit.com/product/4634",
+  "documentationURL": "https://learn.adafruit.com/adafruit-lsm9ds1-accelerometer-plus-gyro-plus-magnetometer-9-dof-breakout?view=all",
+  "published": false,
+  "i2cAddresses": [ "0x1E", "0x6B" ],
+  "subcomponents": [
+    {
+      "displayName": "RAW Magnitude",
+      "sensorType": "raw"
+    },
+    {
+      "displayName": "Interrupt Event (Click)",
+      "sensorType": "boolean"
+    },
+    {
+      "displayName": "Acceleration (m/s²)",
+      "sensorType": "accelerometer"
+    },
+    {
+      "displayName": "Gyroscope (rad/s)",
+      "sensorType": "gyroscope"
+    },
+    {
+      "displayName": "Magnetic Field (uT)",
+      "sensorType": "magnetic-field"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "displayName": "LIS2MDL",
+  "vendor": "STMicroelectronics",
+  "productURL": "https://www.adafruit.com/product/4488",
+  "documentationURL": "https://learn.adafruit.com/lis2mdl-triple-axis-magnetometer?view=all",
+  "published": false,
+  "i2cAddresses": [ "0x1E" ],
+  "subcomponents": [
+    {
+      "displayName": "Magnitude (uT)",
+      "sensorType": "raw"
+    },
+    {
+      "displayName": "Magnetic Field (uT)",
+      "sensorType": "magnetic-field"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "displayName": "LSM303AGR",
+  "vendor": "STMicroelectronics",
+  "productURL": "https://www.adafruit.com/product/4413",
+  "documentationURL": "https://learn.adafruit.com/lsm303-accelerometer-slash-compass-breakout?view=all",
+  "published": false,
+  "i2cAddresses": [ "0x19", "0x1E" ],
+  "subcomponents": [
+    {
+      "displayName": "RAW Magnitude",
+      "sensorType": "raw"
+    },
+    {
+      "displayName": "Acceleration (m/s²)",
+      "sensorType": "accelerometer"
+    },
+    {
+      "displayName": "Magnetic Field (uT)",
+      "sensorType": "magnetic-field"
+    }
+  ]
+}
