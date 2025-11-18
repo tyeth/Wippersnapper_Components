@@ -11,10 +11,6 @@
       "sensorType": "raw"
     },
     {
-      "displayName": "Interrupt Event (Click)",
-      "sensorType": "boolean"
-    },
-    {
       "displayName": "Acceleration (m/s²)",
       "sensorType": "accelerometer"
     },
@@ -25,6 +21,14 @@
     {
       "displayName": "Magnetic Field (uT)",
       "sensorType": "magnetic-field"
+    },
+    {
+      "displayName": "Temperature (°C)",
+      "sensorType": "ambient-temp"
+    },
+    {
+      "displayName": "Temperature (°F)",
+      "sensorType": "ambient-temp-fahrenheit"
     }
   ]
 }

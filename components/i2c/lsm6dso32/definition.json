@@ -21,6 +21,14 @@
     {
       "displayName": "Gyroscope (rad/s)",
       "sensorType": "gyroscope"
+    },
+    {
+      "displayName": "Temperature (°C)",
+      "sensorType": "ambient-temp"
+    },
+    {
+      "displayName": "Temperature (°F)",
+      "sensorType": "ambient-temp-fahrenheit"
     }
   ]
 }
