@@ -55,6 +55,8 @@ CHANNEL_FILLS_MUX2 = [
     PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid"),  # Ch2
     PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"),  # Ch3
 ]
+NON_DEFAULT_FILL = PatternFill(start_color="F4B084", end_color="F4B084", fill_type="solid")  # orange — assigned != default
+NON_DEFAULT_FONT = Font(bold=True, color="833C0B")
 NOMUX_FILL = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
 NOMUX_HEADER_FILL = PatternFill(start_color="C55A11", end_color="C55A11", fill_type="solid")
 THIN_BORDER = Border(
@@ -71,8 +73,8 @@ def load_components(base_dir):
         with open(defn, "r", encoding="utf-8") as f:
             data = json.load(f)
         name = defn.parent.name
-        addrs = sorted(int(a, 16) for a in data.get("i2cAddresses", []))
-        usable = sorted(a for a in addrs if a not in MUX_RESERVED)
+        addrs = [int(a, 16) for a in data.get("i2cAddresses", [])]  # preserve definition order (default first)
+        usable = [a for a in addrs if a not in MUX_RESERVED]
         components.append({
             "dir": name,
             "displayName": data.get("displayName", name),
@@ -471,6 +473,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
         for ci, comp in enumerate(comps_in):
             r += 1
             pa = picked_addr.get(comp["dir"])
+            default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
+            is_non_default = pa is not None and pa != default_addr
             vals = [
                 ci + 1,
                 comp["dir"],
@@ -486,6 +490,9 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
                 if not comp["published"]:
                     cell.fill = UNPUBLISHED_FILL
+                elif is_non_default and hi == 3:  # Assigned Addr column
+                    cell.fill = NON_DEFAULT_FILL
+                    cell.font = NON_DEFAULT_FONT
 
         # Column widths
         ws.column_dimensions[get_column_letter(col_offset + 1)].width = 4
@@ -504,7 +511,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
     row2 += 1
 
     linear_headers = ["Order", "Channel#", "Channel Label", "Component", "Display Name",
-                       "Assigned Address", "All Addresses", "Vendor", "Published"]
+                       "Assigned Address", "Default Address", "All Addresses", "Vendor",
+                       "Published", "Non-Default?"]
     for hi, hdr in enumerate(linear_headers):
         cell = ws.cell(row=row2, column=linear_col + hi, value=hdr)
         cell.font = HEADER_FONT
@@ -517,23 +525,30 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
     for ch in range(n_channels):
         for comp in channels.get(ch, []):
             pa = picked_addr.get(comp["dir"])
+            default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
+            is_non_default = pa is not None and pa != default_addr
             vals = [
                 order_num, ch, channel_short_label(ch),
                 comp["dir"], comp["displayName"],
                 f"0x{pa:02X}" if pa is not None else "?",
+                f"0x{default_addr:02X}" if default_addr is not None else "?",
                 ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
                 comp["vendor"],
                 "yes" if comp["published"] else "no",
+                "NON-DEFAULT" if is_non_default else "",
             ]
             for hi, v in enumerate(vals):
                 cell = ws.cell(row=row2, column=linear_col + hi, value=v)
                 cell.border = THIN_BORDER
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
                 cell.fill = channel_fill(ch)
+                if is_non_default and hi in (5, 10):  # Assigned Address & Non-Default columns
+                    cell.fill = NON_DEFAULT_FILL
+                    cell.font = NON_DEFAULT_FONT
             order_num += 1
             row2 += 1
 
-    widths = [6, 9, 16, 18, 28, 14, 36, 26, 9]
+    widths = [6, 9, 16, 18, 28, 14, 14, 36, 26, 9, 14]
     for wi, w in enumerate(widths):
         ws.column_dimensions[get_column_letter(linear_col + wi)].width = w
 
