@@ -262,6 +262,7 @@ def load_components(base_dir):
             ],
             "has_jumper": jinfo.get("has_address_jumper", None),
             "jumper_info": jinfo.get("address_jumper_info", ""),
+            "jumper_addrs": jinfo.get("addresses", {}),  # {hex_addr: description}
             "guide_url": jinfo.get("guide_url") or data.get("documentationURL", ""),
         })
     components.sort(key=lambda c: (c["all_addresses"][0] if c["all_addresses"] else 0xFF, c["dir"]))
@@ -530,17 +531,98 @@ def write_sheet1(ws, components, addr_map, conflicts):
     ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{len(components) + 1}"
 
 
-def _jumper_for_addr(comp, addr):
-    """Return a short jumper instruction for reaching a specific address."""
-    if not comp.get("jumper_info"):
-        return "no jumper — needs mux isolation"
-    info = comp["jumper_info"]
-    addr_hex = f"0x{addr:02X}" if addr is not None else ""
-    # Try to find the specific address mention in the info string
-    if addr_hex.upper() in info.upper() or addr_hex.lower() in info.lower():
-        # Extract a relevant snippet
-        return info
-    return info
+def _jumper_setting(comp, addr):
+    """Return (short_setting, full_info) for reaching a specific address.
+
+    short_setting: e.g. "A0:1 A1:0", "ADDR:closed", "SDO:GND"
+    full_info: the full jumper_info text
+    """
+    import re
+
+    if addr is None:
+        return ("", "")
+
+    addr_hex = f"0x{addr:02X}"
+    addr_hex_upper = addr_hex.upper()
+    jumper_addrs = comp.get("jumper_addrs", {})
+    full_info = comp.get("jumper_info", "")
+    has_jumper = comp.get("has_jumper")
+
+    # No jumper info at all
+    if not full_info:
+        return ("mux isolation", "No jumper info available")
+
+    # has_jumper=False but might still have pin-selectable addresses (e.g. SHT3x ADR pin)
+    # So still try the address lookup below before giving up
+
+    # Look up the per-address description from the JSON cache
+    desc = ""
+    for k, v in jumper_addrs.items():
+        if k.upper() == addr_hex_upper:
+            desc = v
+            break
+    # Also try if addr falls within a range key like "0x28-0x2F"
+    if not desc:
+        for k, v in jumper_addrs.items():
+            if "-" in k:
+                try:
+                    lo, hi = k.split("-")
+                    if int(lo, 16) <= addr <= int(hi, 16):
+                        desc = v
+                        break
+                except ValueError:
+                    pass
+
+    if not desc:
+        if has_jumper is False:
+            return ("mux isolation", full_info or "Fixed address — no jumper")
+        # Address not in cache — truncate full info
+        return (full_info[:50] + "...", full_info)
+
+    # ── Convert description to concise pad notation ──
+    d = desc.lower()
+
+    if "default" in d:
+        return ("default", full_info)
+
+    # SDO/ADDR single-jumper patterns
+    if "sdo" in d:
+        if "gnd" in d:
+            return ("SDO:GND", full_info)
+        elif "bridged" in d or "closed" in d:
+            return ("SDO:GND", full_info)
+        elif "high" in d or "vdd" in d:
+            return ("SDO:VDD", full_info)
+        return ("SDO:closed", full_info)
+
+    if "addr" in d and ("closed" in d or "bridged" in d):
+        return ("ADDR:closed", full_info)
+    if "addr" in d and ("vdd" in d or "vin" in d or "high" in d):
+        return ("ADDR:VDD", full_info)
+
+    if "sa0" in d:
+        return ("SA0:closed" if "closed" in d else "SA0:open", full_info)
+
+    if "adr" in d:
+        if "vin" in d or "vdd" in d or "high" in d:
+            return ("ADR:VDD", full_info)
+        return ("ADR:GND", full_info)
+
+    # Multi-pad patterns: A0, A1, A2, AD0, AD1
+    pads = re.findall(r'\b(A[D]?\d)\b', desc, re.IGNORECASE)
+    if pads:
+        states = []
+        for p in pads:
+            states.append(f"{p.upper()}:1")
+        return (" ".join(states), full_info)
+
+    # Named jumpers like "43k jumper closed"
+    jumper_match = re.search(r'(\w+)\s+jumper\s+(closed|open|bridged)', desc, re.IGNORECASE)
+    if jumper_match:
+        return (f"{jumper_match.group(1)}:{jumper_match.group(2)}", full_info)
+
+    # Fallback: use the description as-is but trimmed
+    return (desc[:40], full_info)
 
 
 def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
@@ -622,7 +704,7 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
 
     # ── Channel blocks side-by-side ──
     BLOCK_WIDTH = 7
-    block_headers = ["#", "Component", "Display Name", "Assigned Addr", "All Addrs", "Jumper Config", "Vendor"]
+    block_headers = ["#", "Component", "Display Name", "Assigned Addr", "Jumper Setting", "All Addrs", "Vendor"]
     layout_start_row = row
 
     active_channels = sorted(ch for ch in range(n_channels) if channels.get(ch))
@@ -672,14 +754,14 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
             pa = picked_addr.get(comp["dir"])
             default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
             is_non_default = pa is not None and pa != default_addr
-            jumper_note = _jumper_for_addr(comp, pa) if is_non_default else ""
+            short_setting, _ = _jumper_setting(comp, pa) if is_non_default else ("", "")
             vals = [
                 ci + 1,
                 comp["dir"],
                 comp["displayName"],
                 f"0x{pa:02X}" if pa is not None else "?",
+                short_setting,
                 ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
-                jumper_note,
                 comp["vendor"],
             ]
             for hi, v in enumerate(vals):
@@ -692,8 +774,9 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
                 elif is_non_default and hi == 3:  # Assigned Addr column
                     cell.fill = NON_DEFAULT_FILL
                     cell.font = NON_DEFAULT_FONT
-                elif is_non_default and hi == 5:  # Jumper Config column
+                elif is_non_default and hi == 4:  # Jumper Setting column
                     cell.fill = NON_DEFAULT_FILL
+                    cell.font = NON_DEFAULT_FONT
 
         # Column widths
         ws.column_dimensions[get_column_letter(col_offset + 1)].width = 4
@@ -713,8 +796,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
     row2 += 1
 
     linear_headers = ["Order", "Channel#", "Channel Label", "Component", "Display Name",
-                       "Assigned Address", "Default Address", "All Addresses",
-                       "Has Jumper", "Jumper Config Required", "Guide URL",
+                       "Assigned Address", "Default Address", "Jumper Setting",
+                       "All Addresses", "Has Jumper", "Jumper Details", "Guide URL",
                        "Vendor", "Published", "Non-Default?"]
     for hi, hdr in enumerate(linear_headers):
         cell = ws.cell(row=row2, column=linear_col + hi, value=hdr)
@@ -732,15 +815,16 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
             is_non_default = pa is not None and pa != default_addr
             has_j = comp["has_jumper"]
             jumper_str = "Yes" if has_j else ("No" if has_j is False else "?")
-            jumper_note = _jumper_for_addr(comp, pa) if is_non_default else ""
+            short_setting, full_info = _jumper_setting(comp, pa) if is_non_default else ("", "")
             vals = [
                 order_num, ch, channel_short_label(ch),
                 comp["dir"], comp["displayName"],
                 f"0x{pa:02X}" if pa is not None else "?",
                 f"0x{default_addr:02X}" if default_addr is not None else "?",
+                short_setting,
                 ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
                 jumper_str,
-                jumper_note,
+                full_info,
                 comp["guide_url"],
                 comp["vendor"],
                 "yes" if comp["published"] else "no",
@@ -751,13 +835,14 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
                 cell.border = THIN_BORDER
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
                 cell.fill = channel_fill(ch)
-                if is_non_default and hi in (5, 9, 13):  # Assigned Address, Jumper Config, Non-Default columns
+                # Jumper Setting (7) and Non-Default (14)
+                if is_non_default and hi in (5, 7, 14):
                     cell.fill = NON_DEFAULT_FILL
                     cell.font = NON_DEFAULT_FONT
             order_num += 1
             row2 += 1
 
-    widths = [6, 9, 16, 18, 28, 14, 14, 36, 10, 50, 40, 26, 9, 14]
+    widths = [6, 9, 16, 18, 28, 14, 14, 16, 36, 10, 50, 40, 26, 9, 14]
     for wi, w in enumerate(widths):
         ws.column_dimensions[get_column_letter(linear_col + wi)].width = w
 
