@@ -14,6 +14,10 @@ Hardware config:
 
 import json
 import os
+import shutil
+import subprocess
+import sys
+import time
 from pathlib import Path
 from collections import defaultdict
 
@@ -65,8 +69,177 @@ THIN_BORDER = Border(
 )
 
 
+JUMPER_JSON_PATH = "i2c_address_jumper_info.json"
+
+
+def load_jumper_info(base_dir):
+    """Load cached address jumper info from JSON."""
+    path = Path(base_dir) / JUMPER_JSON_PATH
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("components", {})
+    return {}
+
+
+def save_jumper_info(base_dir, jumper_db):
+    """Write jumper info back to the JSON cache."""
+    path = Path(base_dir) / JUMPER_JSON_PATH
+    # Read existing file to preserve metadata
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = {"metadata": {}, "components": {}}
+    data["components"] = jumper_db
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def _find_claude_cli():
+    """Locate the claude CLI across Windows, macOS, Linux, and WSL."""
+    # Try plain 'claude' first (works on macOS/Linux, and Windows if in PATH)
+    cmd = shutil.which("claude")
+    if cmd:
+        return cmd
+    # On Windows, npm global installs create .cmd shims
+    if sys.platform == "win32":
+        for ext in (".cmd", ".exe", ".ps1"):
+            cmd = shutil.which("claude" + ext)
+            if cmd:
+                return cmd
+        # Also check common npm global locations
+        for candidate in [
+            Path(os.environ.get("APPDATA", "")) / "npm" / "claude.cmd",
+            Path(os.environ.get("LOCALAPPDATA", "")) / "npm" / "claude.cmd",
+        ]:
+            if candidate.exists():
+                return str(candidate)
+    return None
+
+
+def fetch_jumper_info_via_claude(component_name, doc_url, addresses):
+    """Call 'claude -p' to research address jumper info for a component."""
+    addrs_str = ", ".join(addresses)
+    prompt = (
+        f"For the Adafruit I2C breakout board '{component_name}' "
+        f"(I2C addresses: {addrs_str}), "
+        f"documentation: {doc_url or 'none'}\n\n"
+        f"What is the I2C address jumper/solder pad configuration? "
+        f"Return ONLY a JSON object (no markdown fencing) with these fields:\n"
+        f'  "default_address": hex string like "0x48",\n'
+        f'  "has_address_jumper": true/false,\n'
+        f'  "address_jumper_info": concise description of how to change address,\n'
+        f'  "addresses": object mapping hex address to description,\n'
+        f'  "confidence": "high" or "low"\n'
+    )
+
+    claude_cmd = _find_claude_cli()
+    if not claude_cmd:
+        print("    'claude' CLI not found — skipping auto-fetch")
+        return None
+
+    try:
+        # Use shell=True on Windows for .cmd shims; direct exec elsewhere
+        use_shell = sys.platform == "win32" and claude_cmd.endswith(".cmd")
+        result = subprocess.run(
+            [claude_cmd, "-p", prompt, "--output-format", "text"],
+            capture_output=True, text=True, timeout=120,
+            shell=use_shell,
+        )
+        if result.returncode != 0:
+            print(f"    claude exited with code {result.returncode}")
+            if result.stderr:
+                print(f"    stderr: {result.stderr[:200]}")
+            return None
+
+        # Parse JSON from output (strip any markdown fencing)
+        output = result.stdout.strip()
+        if output.startswith("```"):
+            output = "\n".join(output.split("\n")[1:])
+        if output.endswith("```"):
+            output = "\n".join(output.split("\n")[:-1])
+        output = output.strip()
+
+        data = json.loads(output)
+        return data
+    except subprocess.TimeoutExpired:
+        print("    claude timed out (120s)")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"    failed to parse claude output as JSON: {e}")
+        print(f"    raw output: {output[:300]}")
+        return None
+    except Exception as e:
+        print(f"    error calling claude: {e}")
+        return None
+
+
+def check_and_fetch_missing_jumper_info(base_dir, components, jumper_db):
+    """Check for components missing jumper info, offer to fetch via claude -p."""
+    missing = []
+    for comp in components:
+        name = comp["dir"]
+        if name not in jumper_db:
+            doc_url = comp.get("guide_url", "")
+            addrs = [f"0x{a:02X}" for a in comp["all_addresses"]]
+            missing.append((name, doc_url, addrs))
+
+    if not missing:
+        return jumper_db
+
+    print(f"\n{'='*60}")
+    print(f"WARNING: {len(missing)} component(s) missing address jumper info:")
+    for name, doc_url, addrs in missing:
+        print(f"  - {name} ({', '.join(addrs)})")
+    print(f"{'='*60}")
+
+    if not _find_claude_cli():
+        print("'claude' CLI not found — cannot auto-fetch. Add entries manually to")
+        print(f"  {JUMPER_JSON_PATH}")
+        return jumper_db
+
+    print(f"\nWill attempt to fetch info via 'claude -p' in 5 seconds...")
+    print("Press Ctrl+C to skip.\n")
+    try:
+        for i in range(5, 0, -1):
+            print(f"  {i}...", end=" ", flush=True)
+            time.sleep(1)
+        print()
+    except KeyboardInterrupt:
+        print("\n  Skipped.")
+        return jumper_db
+
+    updated = False
+    for name, doc_url, addrs in missing:
+        print(f"\n  Fetching jumper info for '{name}'...")
+        data = fetch_jumper_info_via_claude(name, doc_url, addrs)
+        if data:
+            jumper_db[name] = {
+                "default_address": data.get("default_address", addrs[0] if addrs else "?"),
+                "has_address_jumper": data.get("has_address_jumper", False),
+                "address_jumper_info": data.get("address_jumper_info", ""),
+                "addresses": data.get("addresses", {}),
+                "guide_url": doc_url or None,
+                "confidence": data.get("confidence", "low"),
+                "auto_fetched": True,
+            }
+            print(f"    OK: {data.get('address_jumper_info', '')[:80]}")
+            updated = True
+        else:
+            print(f"    FAILED — add manually to {JUMPER_JSON_PATH}")
+
+    if updated:
+        save_jumper_info(base_dir, jumper_db)
+        print(f"\n  Updated {JUMPER_JSON_PATH}")
+
+    return jumper_db
+
+
 def load_components(base_dir):
     """Load all I2C component definitions."""
+    jumper_db = load_jumper_info(base_dir)
     components = []
     i2c_dir = Path(base_dir) / "components" / "i2c"
     for defn in sorted(i2c_dir.glob("*/definition.json")):
@@ -75,6 +248,7 @@ def load_components(base_dir):
         name = defn.parent.name
         addrs = [int(a, 16) for a in data.get("i2cAddresses", [])]  # preserve definition order (default first)
         usable = [a for a in addrs if a not in MUX_RESERVED]
+        jinfo = jumper_db.get(name, {})
         components.append({
             "dir": name,
             "displayName": data.get("displayName", name),
@@ -86,6 +260,9 @@ def load_components(base_dir):
                 s["sensorType"] if isinstance(s, dict) else s
                 for s in data.get("subcomponents", [])
             ],
+            "has_jumper": jinfo.get("has_address_jumper", None),
+            "jumper_info": jinfo.get("address_jumper_info", ""),
+            "guide_url": jinfo.get("guide_url") or data.get("documentationURL", ""),
         })
     components.sort(key=lambda c: (c["all_addresses"][0] if c["all_addresses"] else 0xFF, c["dir"]))
     return components
@@ -273,6 +450,7 @@ def write_sheet1(ws, components, addr_map, conflicts):
     headers = [
         "Component", "Display Name", "Vendor", "Published",
         "I2C Addresses", "# Addrs", "Usable (excl mux)",
+        "Has Jumper", "Jumper Info", "Guide URL",
         "Conflicts With", "# Conflicts", "Sensor Types",
     ]
     for a in all_addrs:
@@ -292,6 +470,8 @@ def write_sheet1(ws, components, addr_map, conflicts):
         conflict_list = conflicts.get(comp["dir"], [])
         is_conflicted = len(conflict_list) > 0
 
+        has_j = comp["has_jumper"]
+        jumper_str = "Yes" if has_j else ("No" if has_j is False else "?")
         vals = [
             comp["dir"],
             comp["displayName"],
@@ -300,6 +480,9 @@ def write_sheet1(ws, components, addr_map, conflicts):
             ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
             len(comp["all_addresses"]),
             ", ".join(f"0x{a:02X}" for a in comp["usable_addresses"]),
+            jumper_str,
+            comp["jumper_info"],
+            comp["guide_url"],
             ", ".join(conflict_list) if conflict_list else "None",
             len(conflict_list),
             ", ".join(comp["sensors"]) if comp["sensors"] else "",
@@ -311,7 +494,7 @@ def write_sheet1(ws, components, addr_map, conflicts):
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             if not comp["published"]:
                 cell.fill = UNPUBLISHED_FILL
-            elif is_conflicted and col in (5, 8):
+            elif is_conflicted and col in (5, 11):
                 cell.fill = CONFLICT_FILL
             elif not is_conflicted and col == 5:
                 cell.fill = UNIQUE_FILL
@@ -336,7 +519,8 @@ def write_sheet1(ws, components, addr_map, conflicts):
                     cell.fill = UNIQUE_FILL
                     cell.font = Font(color="006100")
 
-    col_widths = {1: 18, 2: 28, 3: 26, 4: 10, 5: 40, 6: 8, 7: 36, 8: 50, 9: 10, 10: 30}
+    col_widths = {1: 18, 2: 28, 3: 26, 4: 10, 5: 40, 6: 8, 7: 36,
+                  8: 10, 9: 50, 10: 40, 11: 50, 12: 10, 13: 30}
     for c, w in col_widths.items():
         ws.column_dimensions[get_column_letter(c)].width = w
     for ai in range(len(all_addrs)):
@@ -344,6 +528,19 @@ def write_sheet1(ws, components, addr_map, conflicts):
 
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{len(components) + 1}"
+
+
+def _jumper_for_addr(comp, addr):
+    """Return a short jumper instruction for reaching a specific address."""
+    if not comp.get("jumper_info"):
+        return "no jumper — needs mux isolation"
+    info = comp["jumper_info"]
+    addr_hex = f"0x{addr:02X}" if addr is not None else ""
+    # Try to find the specific address mention in the info string
+    if addr_hex.upper() in info.upper() or addr_hex.lower() in info.lower():
+        # Extract a relevant snippet
+        return info
+    return info
 
 
 def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
@@ -424,8 +621,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
     row += 2
 
     # ── Channel blocks side-by-side ──
-    BLOCK_WIDTH = 6
-    block_headers = ["#", "Component", "Display Name", "Assigned Addr", "All Addrs", "Vendor"]
+    BLOCK_WIDTH = 7
+    block_headers = ["#", "Component", "Display Name", "Assigned Addr", "All Addrs", "Jumper Config", "Vendor"]
     layout_start_row = row
 
     active_channels = sorted(ch for ch in range(n_channels) if channels.get(ch))
@@ -475,12 +672,14 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
             pa = picked_addr.get(comp["dir"])
             default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
             is_non_default = pa is not None and pa != default_addr
+            jumper_note = _jumper_for_addr(comp, pa) if is_non_default else ""
             vals = [
                 ci + 1,
                 comp["dir"],
                 comp["displayName"],
                 f"0x{pa:02X}" if pa is not None else "?",
                 ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
+                jumper_note,
                 comp["vendor"],
             ]
             for hi, v in enumerate(vals):
@@ -493,6 +692,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
                 elif is_non_default and hi == 3:  # Assigned Addr column
                     cell.fill = NON_DEFAULT_FILL
                     cell.font = NON_DEFAULT_FONT
+                elif is_non_default and hi == 5:  # Jumper Config column
+                    cell.fill = NON_DEFAULT_FILL
 
         # Column widths
         ws.column_dimensions[get_column_letter(col_offset + 1)].width = 4
@@ -500,7 +701,8 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
         ws.column_dimensions[get_column_letter(col_offset + 3)].width = 24
         ws.column_dimensions[get_column_letter(col_offset + 4)].width = 12
         ws.column_dimensions[get_column_letter(col_offset + 5)].width = 30
-        ws.column_dimensions[get_column_letter(col_offset + 6)].width = 22
+        ws.column_dimensions[get_column_letter(col_offset + 6)].width = 30
+        ws.column_dimensions[get_column_letter(col_offset + 7)].width = 22
 
     # ── Linear ordered list for JSON export ──
     row2 = layout_start_row
@@ -511,8 +713,9 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
     row2 += 1
 
     linear_headers = ["Order", "Channel#", "Channel Label", "Component", "Display Name",
-                       "Assigned Address", "Default Address", "All Addresses", "Vendor",
-                       "Published", "Non-Default?"]
+                       "Assigned Address", "Default Address", "All Addresses",
+                       "Has Jumper", "Jumper Config Required", "Guide URL",
+                       "Vendor", "Published", "Non-Default?"]
     for hi, hdr in enumerate(linear_headers):
         cell = ws.cell(row=row2, column=linear_col + hi, value=hdr)
         cell.font = HEADER_FONT
@@ -527,12 +730,18 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
             pa = picked_addr.get(comp["dir"])
             default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
             is_non_default = pa is not None and pa != default_addr
+            has_j = comp["has_jumper"]
+            jumper_str = "Yes" if has_j else ("No" if has_j is False else "?")
+            jumper_note = _jumper_for_addr(comp, pa) if is_non_default else ""
             vals = [
                 order_num, ch, channel_short_label(ch),
                 comp["dir"], comp["displayName"],
                 f"0x{pa:02X}" if pa is not None else "?",
                 f"0x{default_addr:02X}" if default_addr is not None else "?",
                 ", ".join(f"0x{a:02X}" for a in comp["all_addresses"]),
+                jumper_str,
+                jumper_note,
+                comp["guide_url"],
                 comp["vendor"],
                 "yes" if comp["published"] else "no",
                 "NON-DEFAULT" if is_non_default else "",
@@ -542,13 +751,13 @@ def write_sheet2(ws, components, assignment, picked_addr, channel_addrs):
                 cell.border = THIN_BORDER
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
                 cell.fill = channel_fill(ch)
-                if is_non_default and hi in (5, 10):  # Assigned Address & Non-Default columns
+                if is_non_default and hi in (5, 9, 13):  # Assigned Address, Jumper Config, Non-Default columns
                     cell.fill = NON_DEFAULT_FILL
                     cell.font = NON_DEFAULT_FONT
             order_num += 1
             row2 += 1
 
-    widths = [6, 9, 16, 18, 28, 14, 14, 36, 26, 9, 14]
+    widths = [6, 9, 16, 18, 28, 14, 14, 36, 10, 50, 40, 26, 9, 14]
     for wi, w in enumerate(widths):
         ws.column_dimensions[get_column_letter(linear_col + wi)].width = w
 
@@ -609,6 +818,14 @@ def write_sheet3(ws, components, addr_map):
 def main():
     base_dir = Path(__file__).parent
     components = load_components(base_dir)
+
+    # Check for missing jumper info and auto-fetch if possible
+    jumper_db = load_jumper_info(base_dir)
+    jumper_db = check_and_fetch_missing_jumper_info(base_dir, components, jumper_db)
+    # Reload components to pick up any newly fetched info
+    if any(c["dir"] not in jumper_db or c.get("has_jumper") is None for c in components):
+        components = load_components(base_dir)
+
     addr_map = build_address_map(components)
     conflicts = find_conflicts(components, addr_map)
 
