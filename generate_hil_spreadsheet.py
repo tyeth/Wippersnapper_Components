@@ -5,6 +5,7 @@ Creates an Excel workbook with:
   Sheet 1 - Component Matrix: all components, addresses, vendors, conflicts
   Sheet 2 - HIL Mux Layout: conflict-free channel assignments for testing
   Sheet 3 - Address Conflicts: per-address overlap summary
+  Sheet 4 - Test Fixtures: components grouped by measured phenomena
 
 Hardware config:
   - 8-ch TCA9548A mux @ 0x77  (all 3 addr pads bridged)
@@ -900,6 +901,224 @@ def write_sheet3(ws, components, addr_map):
     ws.auto_filter.ref = f"A1:D{row - 1}"
 
 
+# ── Phenomena mapping ──────────────────────────────────────────────────────
+# Map sensor types to physical phenomena and suggested test fixtures.
+SENSOR_TO_PHENOMENON = {
+    "ambient-temp":            "Temperature",
+    "ambient-temp-fahrenheit": "Temperature",
+    "object-temp":             "Temperature (IR)",
+    "object-temp-fahrenheit":  "Temperature (IR)",
+    "humidity":                "Humidity",
+    "pressure":                "Pressure",
+    "altitude":                "Pressure",        # derived from pressure
+    "light":                   "Light",
+    "proximity":               "Proximity / ToF",
+    "gas-resistance":          "Gas / Air Quality",
+    "raw":                     "Gas / Air Quality",
+    "tvoc":                    "Gas / Air Quality",
+    "eco2":                    "Gas / Air Quality",
+    "co2":                     "Gas / Air Quality",
+    "voc-index":               "Gas / Air Quality",
+    "nox-index":               "Gas / Air Quality",
+    "pm10-std":                "Particulate Matter",
+    "pm25-std":                "Particulate Matter",
+    "pm100-std":               "Particulate Matter",
+    "current":                 "Current / Voltage",
+    "voltage":                 "Current / Voltage",
+    "unitless-percent":        "Other (Percent)",
+}
+
+PHENOMENON_FIXTURES = {
+    "Temperature":        "Heat source / Peltier module for warming and cooling; thermally isolated enclosure",
+    "Temperature (IR)":   "IR heat lamp or warm object at known distance; background target for baseline",
+    "Humidity":           "Sealed enclosure with wet sponge / desiccant; or ultrasonic humidifier",
+    "Pressure":           "Sealed chamber with hand pump or syringe for pressure changes",
+    "Light":              "Dimmable LED or lamp with known lux levels; light-tight enclosure for dark baseline",
+    "Proximity / ToF":    "Servo-driven target at known distances; flat reflective surface",
+    "Gas / Air Quality":  "Sealed chamber with known VOC source (e.g. isopropyl alcohol swab); clean air baseline",
+    "Particulate Matter":  "Sealed chamber with smoke/dust source; HEPA-filtered clean air baseline",
+    "Current / Voltage":  "Programmable power supply or known resistive load; DAC for voltage reference",
+    "Other (Percent)":    "Depends on specific sensor (e.g. soil moisture probe in wet/dry soil)",
+}
+
+PHENOMENON_FILLS = {
+    "Temperature":        PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid"),
+    "Temperature (IR)":   PatternFill(start_color="FFD9CC", end_color="FFD9CC", fill_type="solid"),
+    "Humidity":           PatternFill(start_color="CCE5FF", end_color="CCE5FF", fill_type="solid"),
+    "Pressure":           PatternFill(start_color="E5CCFF", end_color="E5CCFF", fill_type="solid"),
+    "Light":              PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid"),
+    "Proximity / ToF":    PatternFill(start_color="CCF2FF", end_color="CCF2FF", fill_type="solid"),
+    "Gas / Air Quality":  PatternFill(start_color="D9FFD9", end_color="D9FFD9", fill_type="solid"),
+    "Particulate Matter":  PatternFill(start_color="E6E6E6", end_color="E6E6E6", fill_type="solid"),
+    "Current / Voltage":  PatternFill(start_color="FFE5CC", end_color="FFE5CC", fill_type="solid"),
+    "Other (Percent)":    PatternFill(start_color="F0F0F0", end_color="F0F0F0", fill_type="solid"),
+}
+
+
+def _classify_component(comp):
+    """Return set of phenomena a component measures."""
+    phenomena = set()
+    for s in comp.get("sensors", []):
+        p = SENSOR_TO_PHENOMENON.get(s)
+        if p:
+            phenomena.add(p)
+    return phenomena
+
+
+def write_sheet4(ws, components, assignment, picked_addr):
+    """Test Fixtures — components grouped by measured phenomena."""
+    ws.title = "Test Fixtures"
+
+    # Build phenomenon -> list of components
+    phenom_comps = defaultdict(list)
+    for comp in components:
+        for p in _classify_component(comp):
+            phenom_comps[p].append(comp)
+
+    # Sort phenomena by component count descending
+    sorted_phenomena = sorted(phenom_comps.keys(),
+                              key=lambda p: (-len(phenom_comps[p]), p))
+
+    # ── Summary table ──
+    row = 1
+    ws.cell(row=row, column=1,
+            value="Test Fixtures by Measured Phenomenon").font = Font(
+                name="Calibri", bold=True, size=14)
+    row += 2
+
+    summary_headers = ["Phenomenon", "# Components", "Suggested Test Fixture"]
+    for hi, h in enumerate(summary_headers):
+        cell = ws.cell(row=row, column=hi + 1, value=h)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.border = THIN_BORDER
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+    row += 1
+
+    for p in sorted_phenomena:
+        fill = PHENOMENON_FILLS.get(p, PatternFill())
+        vals = [p, len(phenom_comps[p]), PHENOMENON_FIXTURES.get(p, "")]
+        for hi, v in enumerate(vals):
+            cell = ws.cell(row=row, column=hi + 1, value=v)
+            cell.border = THIN_BORDER
+            cell.fill = fill
+            cell.alignment = Alignment(wrap_text=True, vertical="top")
+        row += 1
+
+    # Identify multi-phenomenon components
+    multi = [(comp, _classify_component(comp))
+             for comp in components
+             if len(_classify_component(comp)) > 1]
+
+    if multi:
+        row += 1
+        ws.cell(row=row, column=1,
+                value="Multi-Phenomenon Sensors (need multiple fixtures)").font = Font(
+                    bold=True, size=12)
+        row += 1
+        multi_headers = ["Component", "Display Name", "Phenomena", "Channel", "Address"]
+        for hi, h in enumerate(multi_headers):
+            cell = ws.cell(row=row, column=hi + 1, value=h)
+            cell.font = HEADER_FONT
+            cell.fill = HEADER_FILL
+            cell.border = THIN_BORDER
+        row += 1
+        for comp, phens in sorted(multi, key=lambda x: (-len(x[1]), x[0]["dir"])):
+            ch = assignment.get(comp["dir"], -1)
+            pa = picked_addr.get(comp["dir"])
+            vals = [
+                comp["dir"],
+                comp["displayName"],
+                ", ".join(sorted(phens)),
+                channel_label(ch) if ch >= 0 else "unplaced",
+                f"0x{pa:02X}" if pa is not None else "?",
+            ]
+            for hi, v in enumerate(vals):
+                cell = ws.cell(row=row, column=hi + 1, value=v)
+                cell.border = THIN_BORDER
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+            row += 1
+
+    row += 2
+
+    # ── Per-phenomenon detail blocks ──
+    ws.cell(row=row, column=1,
+            value="Components by Phenomenon").font = Font(bold=True, size=14)
+    row += 1
+
+    detail_headers = ["#", "Component", "Display Name", "Sensor Types",
+                      "Channel", "Address", "Jumper Setting"]
+
+    for p in sorted_phenomena:
+        row += 1
+        fill = PHENOMENON_FILLS.get(p, PatternFill())
+        header_fill = PatternFill(
+            start_color=fill.start_color.rgb[2:] if fill.start_color and fill.start_color.rgb else "333333",
+            end_color=fill.start_color.rgb[2:] if fill.start_color and fill.start_color.rgb else "333333",
+            fill_type="solid")
+
+        # Phenomenon header
+        fixture_text = PHENOMENON_FIXTURES.get(p, "")
+        cell = ws.cell(row=row, column=1,
+                       value=f"{p}  ({len(phenom_comps[p])} components)")
+        cell.font = Font(bold=True, size=12)
+        cell.fill = fill
+        for ci in range(len(detail_headers)):
+            ws.cell(row=row, column=ci + 1).fill = fill
+        row += 1
+
+        # Fixture note
+        cell = ws.cell(row=row, column=1, value=f"Fixture: {fixture_text}")
+        cell.font = Font(italic=True, size=10, color="555555")
+        row += 1
+
+        # Column headers
+        for hi, h in enumerate(detail_headers):
+            cell = ws.cell(row=row, column=hi + 1, value=h)
+            cell.font = Font(bold=True, size=10)
+            cell.fill = fill
+            cell.border = THIN_BORDER
+            cell.alignment = Alignment(horizontal="center")
+        row += 1
+
+        # Sort by channel then name
+        comps_sorted = sorted(phenom_comps[p],
+                              key=lambda c: (assignment.get(c["dir"], 99), c["dir"]))
+        for ci, comp in enumerate(comps_sorted):
+            ch = assignment.get(comp["dir"], -1)
+            pa = picked_addr.get(comp["dir"])
+            default_addr = comp["all_addresses"][0] if comp["all_addresses"] else None
+            is_non_default = pa is not None and pa != default_addr
+            short_setting, _ = _jumper_setting(comp, pa) if is_non_default else ("", "")
+            vals = [
+                ci + 1,
+                comp["dir"],
+                comp["displayName"],
+                ", ".join(comp["sensors"]),
+                channel_label(ch) if ch >= 0 else "unplaced",
+                f"0x{pa:02X}" if pa is not None else "?",
+                short_setting,
+            ]
+            for hi, v in enumerate(vals):
+                cell = ws.cell(row=row, column=hi + 1, value=v)
+                cell.border = THIN_BORDER
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+                if is_non_default and hi in (5, 6):
+                    cell.fill = NON_DEFAULT_FILL
+                    cell.font = NON_DEFAULT_FONT
+            row += 1
+
+    # Column widths
+    ws.column_dimensions["A"].width = 26
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 28
+    ws.column_dimensions["D"].width = 35
+    ws.column_dimensions["E"].width = 30
+    ws.column_dimensions["F"].width = 12
+    ws.column_dimensions["G"].width = 20
+    ws.freeze_panes = "A1"
+
+
 def main():
     base_dir = Path(__file__).parent
     components = load_components(base_dir)
@@ -976,6 +1195,9 @@ def main():
 
     ws3 = wb.create_sheet()
     write_sheet3(ws3, components, addr_map)
+
+    ws4 = wb.create_sheet()
+    write_sheet4(ws4, components, assignment, picked_addr)
 
     out_path = base_dir / "hil_i2c_components.xlsx"
     wb.save(out_path)
