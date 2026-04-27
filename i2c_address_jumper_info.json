@@ -1,0 +1,750 @@
+{
+  "metadata": {
+    "description": "I2C address jumper/solder pad configuration for Wippersnapper components",
+    "generated": "2026-04-15",
+    "source": "Adafruit Learn Guides (?view=all text) + datasheets",
+    "mux_reserved_addresses": ["0x71", "0x77"],
+    "mux_hardware": [
+      {"type": "TCA9548A", "address": "0x77", "channels": 8},
+      {"type": "TCA9544A", "address": "0x71", "channels": 4}
+    ]
+  },
+  "components": {
+    "adt7410": {
+      "default_address": "0x48",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: A0 and A1. Address = 0x48 + A0(1) + A1(2). Both open: 0x48 (default). A0 closed: 0x49. A1 closed: 0x4A. Both closed: 0x4B.",
+      "addresses": {"0x48": "default (A0 open, A1 open)", "0x49": "A0 closed", "0x4A": "A1 closed", "0x4B": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adt7410-breakout",
+      "confidence": "high"
+    },
+    "aht20": {
+      "default_address": "0x38",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x38, cannot be changed. Guide states: 'There is only one I2C address so it's not a good option when you need multiple humidity sensors.'",
+      "addresses": {"0x38": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-aht20",
+      "confidence": "high"
+    },
+    "aht21": {
+      "default_address": "0x38",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x38, cannot be changed. Same ASAIR chip family as AHT20.",
+      "addresses": {"0x38": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "am2301b": {
+      "default_address": "0x38",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x38, cannot be changed. ASAIR sensor.",
+      "addresses": {"0x38": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "am2315c": {
+      "default_address": "0x38",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x38, cannot be changed. ASAIR sensor.",
+      "addresses": {"0x38": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "apds9999": {
+      "default_address": "0x52",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x52, no jumper pads.",
+      "addresses": {"0x52": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-apds9999-proximity-lux-light-color-sensor",
+      "confidence": "high"
+    },
+    "as5600": {
+      "default_address": "0x36",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x36, no configuration options on Adafruit breakout.",
+      "addresses": {"0x36": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-as5600-magnetic-angle-sensor",
+      "confidence": "high"
+    },
+    "as7331": {
+      "default_address": "0x74",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two jumper pads on back: A0 and A1. Address = 0x74 + A0(1) + A1(2). Both open: 0x74 (default). A0 closed: 0x75. A1 closed: 0x76. Both closed: 0x77.",
+      "addresses": {"0x74": "default (A0 open, A1 open)", "0x75": "A0 closed", "0x76": "A1 closed", "0x77": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-as7331-uv-uva-uvb-uvc-sensor",
+      "confidence": "high"
+    },
+    "bh1750": {
+      "default_address": "0x23",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR solder jumper on back. Default (open, pin low) = 0x23. Bridge jumper (pin high) = 0x5C.",
+      "addresses": {"0x23": "default (ADDR open)", "0x5C": "ADDR jumper bridged"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bh1750-ambient-light-sensor",
+      "confidence": "high"
+    },
+    "bme280": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "Solder ADDR jumper on back (or wire SDO to GND). Default (open/SDO high) = 0x77. Jumper closed (SDO to GND) = 0x76.",
+      "addresses": {"0x77": "default (SDO high/open)", "0x76": "ADDR jumper closed / SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout",
+      "confidence": "high"
+    },
+    "bme680": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "Wire SDO to GND to change address. Default = 0x77. SDO to GND = 0x76.",
+      "addresses": {"0x77": "default (SDO high/open)", "0x76": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bme680-humidity-temperature-barometic-pressure-voc-gas",
+      "confidence": "high"
+    },
+    "bme688": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "Same as BME680 — wire SDO to GND. Default = 0x77. SDO to GND = 0x76.",
+      "addresses": {"0x77": "default (SDO high/open)", "0x76": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bme680-humidity-temperature-barometic-pressure-voc-gas",
+      "confidence": "high"
+    },
+    "bmp280": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin controls address. Default (SDO high) = 0x77. SDO to GND = 0x76. Older board revision exposes SDO pin; newer has solder jumper.",
+      "addresses": {"0x77": "default (SDO high)", "0x76": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bmp280-barometric-pressure-plus-temperature-sensor-breakout",
+      "confidence": "high"
+    },
+    "bmp388": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR solder jumper on board. Default (open) = 0x77. Jumper closed = 0x76.",
+      "addresses": {"0x77": "default (ADDR open)", "0x76": "ADDR jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bmp388-bmp390-bmp3xx",
+      "confidence": "high"
+    },
+    "bmp390": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR solder jumper on board. Default (open) = 0x77. Jumper closed = 0x76. Same guide as BMP388.",
+      "addresses": {"0x77": "default (ADDR open)", "0x76": "ADDR jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-bmp388-bmp390-bmp3xx",
+      "confidence": "high"
+    },
+    "bmp580": {
+      "default_address": "0x47",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin controls address. Default (SDO high) = 0x47. SDO to GND = 0x46. Bosch BMP5xx family.",
+      "addresses": {"0x47": "default (SDO high)", "0x46": "SDO to GND"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "bmp581": {
+      "default_address": "0x47",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin controls address. Default (SDO high) = 0x47. SDO to GND = 0x46. Bosch BMP5xx family.",
+      "addresses": {"0x47": "default (SDO high)", "0x46": "SDO to GND"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "bmp585": {
+      "default_address": "0x47",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin controls address. Default (SDO high) = 0x47. SDO to GND = 0x46. Bosch BMP5xx family.",
+      "addresses": {"0x47": "default (SDO high)", "0x46": "SDO to GND"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "d6t1a": {
+      "default_address": "0x0A",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x0A. OMRON thermal sensor.",
+      "addresses": {"0x0A": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "dht20": {
+      "default_address": "0x38",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x38, cannot be changed. ASAIR sensor.",
+      "addresses": {"0x38": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "dps310": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO/ADR solder jumper on back. Default (open) = 0x77. Bridge jumper (SDO to GND) = 0x76.",
+      "addresses": {"0x77": "default (SDO open)", "0x76": "SDO jumper bridged"},
+      "guide_url": "https://learn.adafruit.com/adafruit-dps310-precision-barometric-pressure-sensor",
+      "confidence": "high"
+    },
+    "ds2484": {
+      "default_address": "0x18",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x18. Maxim 1-Wire to I2C bridge.",
+      "addresses": {"0x18": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "ens160": {
+      "default_address": "0x53",
+      "has_address_jumper": true,
+      "address_jumper_info": "One solder jumper on back labeled 'Addr', plus SDO pin. Default (open) = 0x53. Closed (SDO to GND) = 0x52.",
+      "addresses": {"0x53": "default (ADDR open)", "0x52": "ADDR closed / SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ens160-mox-gas-sensor",
+      "confidence": "high"
+    },
+    "ens161": {
+      "default_address": "0x53",
+      "has_address_jumper": true,
+      "address_jumper_info": "One solder jumper on back labeled 'Addr', plus SDO pin. Default (open) = 0x53. Closed (SDO to GND) = 0x52.",
+      "addresses": {"0x53": "default (ADDR open)", "0x52": "ADDR closed / SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ens161-mox-gas-sensor",
+      "confidence": "high"
+    },
+    "hdc302x": {
+      "default_address": "0x44",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: A0 and A1. Address = 0x44 + A0(1) + A1(2). Both open: 0x44 (default). A0 closed: 0x45. A1 closed: 0x46. Both closed: 0x47.",
+      "addresses": {"0x44": "default (A0 open, A1 open)", "0x45": "A0 closed", "0x46": "A1 closed", "0x47": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-hdc3021-precision-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "hts221": {
+      "default_address": "0x5F",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x5F, cannot be changed.",
+      "addresses": {"0x5F": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-hts221-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "htu21d": {
+      "default_address": "0x40",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x40. Guide states: 'you can't change it!' Use multiplexer for multiple devices.",
+      "addresses": {"0x40": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-htu21d-f-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "htu31d": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR pin selects address. Default (low) = 0x40. ADDR to VDD = 0x41. Two addresses available.",
+      "addresses": {"0x40": "default (ADDR low)", "0x41": "ADDR to VDD"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "ina219": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers: A0 and A1. Bridging pulls pin to VIN. Four addresses: 0x40 (both open), 0x41 (A0), 0x44 (A1), 0x45 (A0+A1).",
+      "addresses": {"0x40": "default (A0 open, A1 open)", "0x41": "A0 closed", "0x44": "A1 closed", "0x45": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ina219-current-sensor-breakout",
+      "confidence": "high"
+    },
+    "ina228": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: A0 and A1. Four addresses: 0x40 (both open), 0x41 (A0), 0x44 (A1), 0x45 (A0+A1). TI chip supports 16 but Adafruit board exposes 4.",
+      "addresses": {"0x40": "default (A0 open, A1 open)", "0x41": "A0 closed", "0x44": "A1 closed", "0x45": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ina228-i2c-power-monitor",
+      "confidence": "high"
+    },
+    "ina237": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: A0 and A1. Four addresses: 0x40 (both open), 0x41 (A0), 0x44 (A1), 0x45 (A0+A1).",
+      "addresses": {"0x40": "default (A0 open, A1 open)", "0x41": "A0 closed", "0x44": "A1 closed", "0x45": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ina237-dc-current-voltage-power-monitor",
+      "confidence": "high"
+    },
+    "ina238": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: A0 and A1. Four addresses: 0x40 (both open), 0x41 (A0), 0x44 (A1), 0x45 (A0+A1). Covered under INA237 guide.",
+      "addresses": {"0x40": "default (A0 open, A1 open)", "0x41": "A0 closed", "0x44": "A1 closed", "0x45": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ina237-dc-current-voltage-power-monitor",
+      "confidence": "high"
+    },
+    "ina260": {
+      "default_address": "0x40",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers: A0 and A1. Bridging pulls pin to VCC. Four addresses: 0x40 (both open), 0x41 (A0), 0x44 (A1), 0x45 (A0+A1).",
+      "addresses": {"0x40": "default (A0 open, A1 open)", "0x41": "A0 closed", "0x44": "A1 closed", "0x45": "A0+A1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ina260-current-voltage-power-sensor-breakout",
+      "confidence": "high"
+    },
+    "lc709203f": {
+      "default_address": "0x0B",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x0B. Guide states: 'uses I2C address 0x0B and it cannot be changed.'",
+      "addresses": {"0x0B": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-lc709203f-lipo-lipoly-battery-monitor",
+      "confidence": "high"
+    },
+    "lps22hb": {
+      "default_address": "0x5D",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin selects address. Default (SDO floating/high) = 0x5D. Pull SDO to GND = 0x5C.",
+      "addresses": {"0x5D": "default (SDO high/floating)", "0x5C": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-lps25-pressure-sensor",
+      "confidence": "high"
+    },
+    "lps25hb": {
+      "default_address": "0x5D",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin selects address. Default (SDO floating/high) = 0x5D. Pull SDO to GND = 0x5C.",
+      "addresses": {"0x5D": "default (SDO high/floating)", "0x5C": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-lps25-pressure-sensor",
+      "confidence": "high"
+    },
+    "lps28dfw": {
+      "default_address": "0x5C",
+      "has_address_jumper": true,
+      "address_jumper_info": "SA0 solder jumper on back. Default (open) = 0x5C. Close SA0 jumper = 0x5D.",
+      "addresses": {"0x5C": "default (SA0 open)", "0x5D": "SA0 jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-lps28-pressure-sensor",
+      "confidence": "high"
+    },
+    "lps33hw": {
+      "default_address": "0x5D",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin selects address. Default (no jumper) = 0x5D. Jumper SDO to GND = 0x5C.",
+      "addresses": {"0x5D": "default (SDO high)", "0x5C": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/lps35hw-water-resistant-pressure-sensor",
+      "confidence": "high"
+    },
+    "lps35hw": {
+      "default_address": "0x5D",
+      "has_address_jumper": true,
+      "address_jumper_info": "SDO pin selects address. Default (no jumper) = 0x5D. Jumper SDO to GND = 0x5C.",
+      "addresses": {"0x5D": "default (SDO high)", "0x5C": "SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/lps35hw-water-resistant-pressure-sensor",
+      "confidence": "high"
+    },
+    "ltr303": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x29, cannot be changed.",
+      "addresses": {"0x29": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ltr-329-ltr-303",
+      "confidence": "high"
+    },
+    "ltr329": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x29, cannot be changed.",
+      "addresses": {"0x29": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ltr-329-ltr-303",
+      "confidence": "high"
+    },
+    "ltr390": {
+      "default_address": "0x53",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x53, cannot be changed.",
+      "addresses": {"0x53": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-ltr390-uv-sensor",
+      "confidence": "high"
+    },
+    "max17048": {
+      "default_address": "0x36",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x36, cannot be changed.",
+      "addresses": {"0x36": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-max17048-lipoly-liion-fuel-gauge-and-battery-monitor",
+      "confidence": "high"
+    },
+    "max44009": {
+      "default_address": "0x4A",
+      "has_address_jumper": true,
+      "address_jumper_info": "Addr solder jumper on bottom of breakout. Default (open) = 0x4A. Solder closed = 0x4B.",
+      "addresses": {"0x4A": "default (ADDR open)", "0x4B": "ADDR jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-max44009-lux-light-sensor",
+      "confidence": "high"
+    },
+    "mcp3421": {
+      "default_address": "0x68",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x68. Guide recommends TCA9548A multiplexer for multiple devices.",
+      "addresses": {"0x68": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-mcp3421-18-bit-adc",
+      "confidence": "high"
+    },
+    "mcp9601": {
+      "default_address": "0x67",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two solder jumpers on back: '43k' and '22k'. Closing 43k = 0x66. Closing 22k = 0x65. Additional addresses 0x60-0x64 via resistor on ADDR pin (see datasheet Table 6-2). Default ADDR floating = 0x67.",
+      "addresses": {"0x67": "default (ADDR floating)", "0x66": "43k jumper closed", "0x65": "22k jumper closed", "0x64": "both jumpers closed", "0x60-0x63": "via external resistor on ADDR pin"},
+      "guide_url": "https://learn.adafruit.com/adafruit-mcp9601",
+      "confidence": "high"
+    },
+    "mcp9808": {
+      "default_address": "0x18",
+      "has_address_jumper": true,
+      "address_jumper_info": "Three address pins: A0, A1, A2 with pull-down resistors. Connect to VDD to set high (read on power-up, must power cycle). Address = 0x18 + A0(1) + A1(2) + A2(4). Eight addresses: 0x18-0x1F.",
+      "addresses": {"0x18": "default (all open)", "0x19": "A0", "0x1A": "A1", "0x1B": "A0+A1", "0x1C": "A2", "0x1D": "A0+A2", "0x1E": "A1+A2", "0x1F": "A0+A1+A2"},
+      "guide_url": "https://learn.adafruit.com/adafruit-mcp9808-precision-i2c-temperature-sensor-guide",
+      "confidence": "high"
+    },
+    "mlx90632b": {
+      "default_address": "0x3A",
+      "has_address_jumper": false,
+      "address_jumper_info": "Default address 0x3A. Alternate 0x3B may be available via configuration. Melexis IR thermometer.",
+      "addresses": {"0x3A": "default", "0x3B": "alternate"},
+      "guide_url": null,
+      "confidence": "low"
+    },
+    "mlx90632d_ext": {
+      "default_address": "0x3A",
+      "has_address_jumper": false,
+      "address_jumper_info": "Same hardware as MLX90632B in extended mode. Default address 0x3A.",
+      "addresses": {"0x3A": "default", "0x3B": "alternate"},
+      "guide_url": null,
+      "confidence": "low"
+    },
+    "mlx90632d_med": {
+      "default_address": "0x3A",
+      "has_address_jumper": false,
+      "address_jumper_info": "Same hardware as MLX90632B in medical mode. Default address 0x3A.",
+      "addresses": {"0x3A": "default", "0x3B": "alternate"},
+      "guide_url": null,
+      "confidence": "low"
+    },
+    "mpl115a2": {
+      "default_address": "0x60",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x60, cannot be changed.",
+      "addresses": {"0x60": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "mprls": {
+      "default_address": "0x18",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x18, cannot be changed. No address jumpers.",
+      "addresses": {"0x18": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-mprls-ported-pressure-sensor-breakout",
+      "confidence": "high"
+    },
+    "ms8607": {
+      "default_address": "0x76",
+      "has_address_jumper": false,
+      "address_jumper_info": "Two fixed addresses (two devices in one package): pressure sensor at 0x76, humidity sensor at 0x40. Both are fixed and cannot be changed.",
+      "addresses": {"0x76": "pressure sensor (fixed)", "0x40": "humidity sensor (fixed)"},
+      "guide_url": "https://learn.adafruit.com/adafruit-te-ms8607-pht-sensor",
+      "confidence": "high"
+    },
+    "nau7802": {
+      "default_address": "0x2A",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x2A. Guide states: 'this sensor has a fixed I2C address of 0x2A.'",
+      "addresses": {"0x2A": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-nau7802-24-bit-adc-stemma-qt-qwiic",
+      "confidence": "high"
+    },
+    "pct2075": {
+      "default_address": "0x37",
+      "has_address_jumper": true,
+      "address_jumper_info": "Three address pins A0, A1, A2 each support three states (high, low, floating) giving 27 possible addresses. All three float by default = 0x37. Solder jumpers on back connect each pin to GND or VCC. See guide for full 27-address map.",
+      "addresses": {"0x37": "default (all floating)", "0x28-0x2F": "various A0/A1/A2 combos", "0x35-0x37": "various", "0x48-0x4F": "various", "0x70-0x77": "various"},
+      "guide_url": "https://learn.adafruit.com/adafruit-pct2075-temperature-sensor",
+      "confidence": "high"
+    },
+    "pmsa003i": {
+      "default_address": "0x12",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x12, cannot be changed.",
+      "addresses": {"0x12": "fixed"},
+      "guide_url": "https://learn.adafruit.com/pmsa003i",
+      "confidence": "high"
+    },
+    "qmc5883p": {
+      "default_address": "0x2C",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x2C, no jumper pads.",
+      "addresses": {"0x2C": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-qmc5883p-triple-axis-magnetometer",
+      "confidence": "high"
+    },
+    "rotary_encoder": {
+      "default_address": "0x36",
+      "has_address_jumper": true,
+      "address_jumper_info": "Three jumper pads on back: A0, A1, A2. Address = 0x36 + A0(1) + A1(2) + A2(4). All open: 0x36. Supports 8 addresses: 0x36-0x3D.",
+      "addresses": {"0x36": "default (all open)", "0x37": "A0", "0x38": "A1", "0x39": "A0+A1", "0x3A": "A2", "0x3B": "A0+A2", "0x3C": "A1+A2", "0x3D": "A0+A1+A2"},
+      "guide_url": "https://learn.adafruit.com/adafruit-i2c-qt-rotary-encoder",
+      "confidence": "high"
+    },
+    "scd30": {
+      "default_address": "0x61",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x61, cannot be changed.",
+      "addresses": {"0x61": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-scd30",
+      "confidence": "high"
+    },
+    "scd40": {
+      "default_address": "0x62",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x62, cannot be changed.",
+      "addresses": {"0x62": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-scd-40-and-scd-41",
+      "confidence": "high"
+    },
+    "sen50": {
+      "default_address": "0x69",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x69. Sensirion SEN5x family.",
+      "addresses": {"0x69": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sen54": {
+      "default_address": "0x69",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x69. Sensirion SEN5x family.",
+      "addresses": {"0x69": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sen55": {
+      "default_address": "0x69",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x69. Sensirion SEN5x family.",
+      "addresses": {"0x69": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sen5x": {
+      "default_address": "0x69",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x69. Sensirion SEN5x family (generic).",
+      "addresses": {"0x69": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sen66": {
+      "default_address": "0x6B",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x6B. Sensirion SEN66.",
+      "addresses": {"0x6B": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sgp30": {
+      "default_address": "0x58",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x58. Guide explicitly states address cannot be changed.",
+      "addresses": {"0x58": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sgp30-gas-tvoc-eco2-mox-sensor",
+      "confidence": "high"
+    },
+    "sgp40": {
+      "default_address": "0x59",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x59, cannot be changed.",
+      "addresses": {"0x59": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sgp40",
+      "confidence": "high"
+    },
+    "sgp41": {
+      "default_address": "0x59",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x59, cannot be changed.",
+      "addresses": {"0x59": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sgp41-multi-pixel-gas-sensor-breakout",
+      "confidence": "high"
+    },
+    "sht20": {
+      "default_address": "0x40",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x40, cannot be changed. Sensirion sensor.",
+      "addresses": {"0x40": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "sht30_mesh": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "Weatherproof mesh SHT30. ADR pin with 10K pull-down sets default 0x44. Tie ADR to Vin for 0x45. Uses breakout pin, not solder jumper.",
+      "addresses": {"0x44": "default (ADR low)", "0x45": "ADR to Vin"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht31-d-temperature-and-humidity-sensor-breakout",
+      "confidence": "high"
+    },
+    "sht30_shell": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "Enclosed shell SHT30. ADR pin with 10K pull-down sets default 0x44. Tie ADR to Vin for 0x45. Uses breakout pin, not solder jumper.",
+      "addresses": {"0x44": "default (ADR low)", "0x45": "ADR to Vin"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht31-d-temperature-and-humidity-sensor-breakout",
+      "confidence": "high"
+    },
+    "sht3x": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "ADR pin with 10K pull-down sets default 0x44. Tie ADR to Vin for 0x45. Uses breakout pin, not solder jumper.",
+      "addresses": {"0x44": "default (ADR low)", "0x45": "ADR to Vin"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht31-d-temperature-and-humidity-sensor-breakout",
+      "confidence": "high"
+    },
+    "sht40": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x44. Guide states: 'cannot be changed (a manufacturer limitation).' Use PCA9546/TCA9548A multiplexer.",
+      "addresses": {"0x44": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht40-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "sht41": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x44, cannot be changed (manufacturer limitation). Same as SHT40.",
+      "addresses": {"0x44": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht40-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "sht45": {
+      "default_address": "0x44",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x44, cannot be changed (manufacturer limitation). Same as SHT40.",
+      "addresses": {"0x44": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sht40-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "shtc3": {
+      "default_address": "0x70",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x70, cannot be changed.",
+      "addresses": {"0x70": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-sensirion-shtc3-temperature-humidity-sensor",
+      "confidence": "high"
+    },
+    "si7021": {
+      "default_address": "0x40",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x40. Guide states: 'you can't change it!'",
+      "addresses": {"0x40": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-si7021-temperature-plus-humidity-sensor",
+      "confidence": "high"
+    },
+    "spa06_003": {
+      "default_address": "0x77",
+      "has_address_jumper": true,
+      "address_jumper_info": "One ADDR jumper pad (SDO pin) on back. Default (open) = 0x77. Solder closed (SDO to GND) = 0x76.",
+      "addresses": {"0x77": "default (ADDR open)", "0x76": "ADDR jumper closed / SDO to GND"},
+      "guide_url": "https://learn.adafruit.com/adafruit-spa06-003-temperature-pressure-sensor",
+      "confidence": "high"
+    },
+    "stemma_soil": {
+      "default_address": "0x36",
+      "has_address_jumper": true,
+      "address_jumper_info": "Two address jumper pads: AD0 and AD1. AD0 adds 1, AD1 adds 2 to base. Neither: 0x36. AD0 only: 0x37. AD1 only: 0x38. Both: 0x39. Supports 4 sensors.",
+      "addresses": {"0x36": "default (AD0 open, AD1 open)", "0x37": "AD0 closed", "0x38": "AD1 closed", "0x39": "AD0+AD1 closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-stemma-soil-sensor-i2c-capacitive-moisture-sensor",
+      "confidence": "high"
+    },
+    "tc74a0": {
+      "default_address": "0x48",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x48. TC74A0 variant has address hardcoded in part number. Other TC74 variants have different fixed addresses.",
+      "addresses": {"0x48": "fixed"},
+      "guide_url": null,
+      "confidence": "high"
+    },
+    "tmp117": {
+      "default_address": "0x48",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR/AD0 solder jumper on back. Default (open/pin low) = 0x48. Jumper closed (pin high) = 0x49.",
+      "addresses": {"0x48": "default (ADDR open)", "0x49": "ADDR jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-tmp117-high-accuracy-i2c-temperature-monitor",
+      "confidence": "high"
+    },
+    "tmp119": {
+      "default_address": "0x48",
+      "has_address_jumper": true,
+      "address_jumper_info": "ADDR solder jumper on back. Open (low) = 0x48 (default). Closed (high) = 0x49.",
+      "addresses": {"0x48": "default (ADDR open)", "0x49": "ADDR jumper closed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-tmp119-high-precision-temperature-sensor",
+      "confidence": "high"
+    },
+    "tsl2591": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x29, cannot be changed. Use I2C multiplexer for multiple sensors.",
+      "addresses": {"0x29": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-tsl2591",
+      "confidence": "high"
+    },
+    "vcnl4020": {
+      "default_address": "0x13",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x13, cannot be changed.",
+      "addresses": {"0x13": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vcnl4020-proximity-and-light-sensor",
+      "confidence": "high"
+    },
+    "vcnl4040": {
+      "default_address": "0x60",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x60, cannot be changed.",
+      "addresses": {"0x60": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vcnl4040-proximity-sensor",
+      "confidence": "high"
+    },
+    "vcnl4200": {
+      "default_address": "0x51",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x51, cannot be changed.",
+      "addresses": {"0x51": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vcnl4200-long-distance-ir-proximity-and-light-sensor",
+      "confidence": "high"
+    },
+    "veml7700": {
+      "default_address": "0x10",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x10, cannot be changed.",
+      "addresses": {"0x10": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-veml7700",
+      "confidence": "high"
+    },
+    "vl53l0x": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "No hardware jumper. Address changeable in software via XSHUT pin. Default 0x29. Hold in reset via XSHUT, then call setAddress() to assign any address <0x7F. Resets on power cycle.",
+      "addresses": {"0x29": "default (software-configurable via XSHUT)"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vl53l0x-micro-lidar-distance-sensor-breakout",
+      "confidence": "high"
+    },
+    "vl53l1x": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "No hardware jumper. Address changeable in software via XSHUT pin. Default 0x29. Use XSHUT to hold in shutdown, then set_address(). Resets on power cycle.",
+      "addresses": {"0x29": "default (software-configurable via XSHUT)"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vl53l1x",
+      "confidence": "high"
+    },
+    "vl53l4cd": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "No hardware jumper. Has XSHUT pin. Guide doesn't document software address change but chip supports it (same ST VL53 family).",
+      "addresses": {"0x29": "default (XSHUT pin available)"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vl53l4cd-time-of-flight-distance-sensor",
+      "confidence": "high"
+    },
+    "vl53l4cx": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "No hardware jumper. Has XSHUT pin. Guide doesn't document software address change but chip supports it (same ST VL53 family).",
+      "addresses": {"0x29": "default (XSHUT pin available)"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vl53l4cx-time-of-flight-distance-sensor",
+      "confidence": "high"
+    },
+    "vl6180x": {
+      "default_address": "0x29",
+      "has_address_jumper": false,
+      "address_jumper_info": "Fixed address 0x29. Guide states: 'you can't change it'. Has XSHUT/SHDN pin for shutdown only.",
+      "addresses": {"0x29": "fixed"},
+      "guide_url": "https://learn.adafruit.com/adafruit-vl6180x-time-of-flight-micro-lidar-distance-sensor-breakout",
+      "confidence": "high"
+    }
+  }
+}
